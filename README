@@ -1,0 +1,3 @@
+Minimal example of my issues with combing levelDB and ZeroMQ
+
+First install zeromq and leveldb on the system, then cabal or stack should be able to build the project.
