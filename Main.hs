@@ -32,7 +32,7 @@ main'' = runZMQ $ do
 main = runResourceT $ runZMQ $ do
     responder <- socket Rep
     bind responder "tcp://*:5555"
-    db <- open "/tmp/leveltest"
+    db <- liftResourceT $ open "/tmp/leveltest"
                defaultOptions{ createIfMissing = True
                              , cacheSize= 2048
                              }
