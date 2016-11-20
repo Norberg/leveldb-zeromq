@@ -37,7 +37,7 @@ makeConfigFromEnvironment :: IO Config
 makeConfigFromEnvironment =
     return $ Config runZeroMQ'
 
-runZeroMQ' :: forall a z. ZMQ a z -> App a
+runZeroMQ' :: forall a z. ZMQ z a -> App a
 runZeroMQ' = undefined
 --runZeroMQ' a z = runZMQ a z
 
@@ -48,7 +48,7 @@ runApp action = do
     runReaderT action cfg
 
 data Config  = Config{
- runZeroMQ :: forall a z. ZMQ a z -> App a
+ runZeroMQ :: forall a z. ZMQ z a -> App a
 }
 
 server :: App ()
