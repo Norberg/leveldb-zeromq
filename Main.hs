@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 module Main where
 
 import           Control.Monad
@@ -9,6 +10,7 @@ import           Data.Monoid
 import           Database.LevelDB
 import qualified Database.LevelDB.Streaming   as S
 import           System.ZMQ4.Monadic
+import Control.Monad.Trans.Reader
 
 main' :: IO ()
 main' = runResourceT $ do
@@ -29,16 +31,31 @@ main'' = runZMQ $ do
         buffer <- receive responder
         send responder [] "Answer"
 
-main = runResourceT $ runZMQ $ do
-    responder <- socket Rep
-    bind responder "tcp://*:5555"
-    db <- liftResourceT $ open "/tmp/leveltest"
-               defaultOptions{ createIfMissing = True
-                             , cacheSize= 2048
-                             }
-    forever $ do
-        buffer <- receive responder
-        res <- get db def "foo"
-        case res of
-            Just r -> send responder [] r
-            Nothing -> send responder [] "empty"
+main = runApp server
+
+makeConfigFromEnvironment :: IO Config
+makeConfigFromEnvironment =
+    return $ Config runZeroMQ'
+
+runZeroMQ' :: forall a z. ZMQ a z -> App a
+runZeroMQ' = undefined
+--runZeroMQ' a z = runZMQ a z
+
+type App = ReaderT Config IO --- Skipped LoggingT for now to simplify
+runApp :: App a -> IO a
+runApp action = do
+    cfg <- makeConfigFromEnvironment
+    runReaderT action cfg
+
+data Config  = Config{
+ runZeroMQ :: forall a z. ZMQ a z -> App a
+}
+
+server :: App ()
+server = do
+    cfg <- ask
+    responder <- runZeroMQ cfg $ socket Rep :: App (Socket z Rep)
+    runZeroMQ cfg $ bind responder "tcp://*:5555"
+    runZeroMQ cfg $ forever $ do
+         buffer <- receive responder
+         send responder [] "Answer"
