@@ -56,6 +56,6 @@ server = do
     cfg <- ask
     responder <- runZeroMQ cfg $ socket Rep :: App (Socket z Rep)
     runZeroMQ cfg $ bind responder "tcp://*:5555"
-    runZeroMQ cfg $ forever $ do
-         buffer <- receive responder
-         send responder [] "Answer"
+    forever $ do
+         buffer <- runZeroMQ cfg $  receive responder
+         runZeroMQ cfg $ send responder [] "Answer"
